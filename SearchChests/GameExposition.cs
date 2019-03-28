@@ -35,13 +35,24 @@ namespace SearchChests
             return allFields;
         }
 
-        internal static void OutputFields<T>(T obj)
+        internal static MethodInfo[] GetAllMethods<T>(T obj)
+        {
+            return obj.GetType().GetMethods();
+        }
+
+        internal static void LogMembers<T>(T obj)
         {
             FieldInfo[] fields = ObjectReflectionExposer.GetAllFields(obj);
+            MethodInfo[] methods = ObjectReflectionExposer.GetAllMethods(obj);
 
             foreach (FieldInfo field in fields)
             {
                 ModEntry.Log(field);
+            }
+
+            foreach (MethodInfo method in methods)
+            {
+                ModEntry.Log(method);
             }
         }
     }
@@ -88,14 +99,6 @@ namespace SearchChests
             }
 
             return messages;
-        }
-    }
-
-    public class GameObjectExposer
-    {
-        internal static GameLocation GetPlayerLocation()
-        {
-            return Game1.currentLocation;
         }
     }
 }

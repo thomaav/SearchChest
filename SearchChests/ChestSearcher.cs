@@ -13,6 +13,7 @@ namespace SearchChests
 {
     public class ChestSearcher {
         private String lastChatMessage;
+        private Color containsItemColor = new Color(1, 1, 1, 255);
         private List<Tuple<Chest, Color>> oldChestTints =
             new List<Tuple<Chest, Color>>();
 
@@ -20,7 +21,10 @@ namespace SearchChests
         {
             foreach (var t in oldChestTints)
             {
-                t.Item1.Tint = t.Item2;
+                if (t.Item1.playerChoiceColor.Value != containsItemColor)
+                    continue;
+
+                t.Item1.playerChoiceColor.Value = t.Item2;
             }
 
             oldChestTints.Clear();
@@ -49,10 +53,10 @@ namespace SearchChests
             if (this.lastChatMessage == "unset")
                 return;
 
-            var playerLocation = GameObjectExposer.GetPlayerLocation();
+            var playerLocation = Game1.currentLocation;
             List<Chest> chestsInLocation = new List<Chest>();
 
-            foreach (var obj in playerLocation.objects.Values)
+            foreach (var obj in playerLocation.Objects.Values)
             {
                 if (obj is Chest)
                 {
@@ -69,9 +73,9 @@ namespace SearchChests
 
                     if (itemDisplayName == itemSearchedFor)
                     {
-                        Color oldTint = chest.tint;
+                        Color oldTint = chest.playerChoiceColor.Value;
                         oldChestTints.Add(Tuple.Create(chest, oldTint));
-                        chest.Tint = new Color(0, 0, 0, 255);
+                        chest.playerChoiceColor.Value = containsItemColor;
                     }
                 }
             }
