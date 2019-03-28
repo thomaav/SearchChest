@@ -25,8 +25,9 @@ namespace SearchChests
 
             chestSearcher = new ChestSearcher();
 
-            helper.Events.Input.ButtonPressed += this.OnButtonPressedSearch;
             helper.Events.GameLoop.Saving += this.OnSaveResetSearch;
+            helper.Events.Input.ButtonPressed += this.OnButtonPressedSearch;
+            helper.Events.Display.MenuChanged += this.OnMenuChangedSearch;
         }
 
         internal static void Log(dynamic val)
@@ -39,15 +40,25 @@ namespace SearchChests
             chestSearcher.CleanUp();
         }
 
-        private void OnButtonPressedSearch(object sender, ButtonPressedEventArgs e)
+        private void Search()
         {
             if (!Context.IsWorldReady)
                 return;
 
+            chestSearcher.SearchChestsInPlayerLocation();
+        }
+
+        private void OnButtonPressedSearch(object sender, ButtonPressedEventArgs e)
+        {
             if (e.Button != Keys.Enter.ToSButton())
                 return;
 
-            chestSearcher.SearchChestsInPlayerLocation();
+            Search();
+        }
+
+        private void OnMenuChangedSearch(object sender, MenuChangedEventArgs e)
+        {
+            Search();
         }
     }
 }
