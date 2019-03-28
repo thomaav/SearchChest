@@ -37,7 +37,10 @@ namespace SearchChests
 
         internal static MethodInfo[] GetAllMethods<T>(T obj)
         {
-            return obj.GetType().GetMethods();
+            return obj.GetType().GetMethods(BindingFlags.Instance |
+                                            BindingFlags.Public |
+                                            BindingFlags.NonPublic |
+                                            BindingFlags.FlattenHierarchy);
         }
 
         internal static void LogMembers<T>(T obj)

@@ -8,11 +8,12 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Objects;
+using StardewValley.Menus;
 
 namespace SearchChests
 {
     public class ChestSearcher {
-        private String lastChatMessage;
+        private String lastChatMessage = null;
         private Color containsItemColor = new Color(1, 1, 1, 255);
         private List<Tuple<Chest, Color>> oldChestTints =
             new List<Tuple<Chest, Color>>();
@@ -45,14 +46,8 @@ namespace SearchChests
                 this.lastChatMessage = _lastChatMessage;
         }
 
-        internal void SearchChestsInPlayerLocation()
+        internal List<Chest> GetChestsInPlayerLocation()
         {
-            ResetChestTints();
-            UpdateLastChatMessage();
-
-            if (this.lastChatMessage == "unset")
-                return;
-
             var playerLocation = Game1.currentLocation;
             List<Chest> chestsInLocation = new List<Chest>();
 
@@ -64,6 +59,19 @@ namespace SearchChests
                 }
             }
 
+            return chestsInLocation;
+        }
+
+        internal void SearchChestsInPlayerLocation()
+        {
+            ResetChestTints();
+            UpdateLastChatMessage();
+
+            if (this.lastChatMessage == null ||
+                this.lastChatMessage == "unset")
+                return;
+
+            List<Chest> chestsInLocation = GetChestsInPlayerLocation();
             foreach (Chest chest in chestsInLocation)
             {
                 foreach (Item item in chest.items)
@@ -78,6 +86,29 @@ namespace SearchChests
                         chest.playerChoiceColor.Value = containsItemColor;
                     }
                 }
+            }
+        }
+
+        internal void SearchChest(IClickableMenu chestMenu)
+        {
+            UpdateLastChatMessage();
+
+            if (this.lastChatMessage == null ||
+                this.lastChatMessage == "unset")
+                return;
+
+            if (!(chestMenu is ItemGrabMenu))
+                ModEntry.Log(chestMenu.GetType());
+
+            InventoryMenu chestInventory = ((ItemGrabMenu) chestMenu).ItemsToGrabMenu;
+            foreach (var chestItem in chestInventory.inventory)
+            {
+                Item actualItem = chestInventory.getItemFromClickableComponent(chestItem);
+                if (actualItem == null)
+                    continue;
+
+                if (actualItem.DisplayName.ToLower() == this.lastChatMessage.ToLower())
+                    chestItem.scale = 1.2f;
             }
         }
     }

@@ -8,6 +8,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Objects;
+using StardewValley.Menus;
 
 namespace SearchChests
 {
@@ -40,7 +41,7 @@ namespace SearchChests
             chestSearcher.CleanUp();
         }
 
-        private void Search()
+        private void SearchChests()
         {
             if (!Context.IsWorldReady)
                 return;
@@ -48,17 +49,29 @@ namespace SearchChests
             chestSearcher.SearchChestsInPlayerLocation();
         }
 
+        private void SearchChest(IClickableMenu chestMenu)
+        {
+            if (!Context.IsWorldReady)
+                return;
+
+            chestSearcher.SearchChest(chestMenu);
+        }
+
         private void OnButtonPressedSearch(object sender, ButtonPressedEventArgs e)
         {
             if (e.Button != Keys.Enter.ToSButton())
                 return;
 
-            Search();
+            SearchChests();
         }
 
         private void OnMenuChangedSearch(object sender, MenuChangedEventArgs e)
         {
-            Search();
+            if (e.NewMenu != null)
+                SearchChest((IClickableMenu) e.NewMenu);
+
+            if (e.OldMenu != null)
+                SearchChests();
         }
     }
 }
