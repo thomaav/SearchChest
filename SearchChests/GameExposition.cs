@@ -10,20 +10,20 @@ namespace SearchChests
 {
     public class ObjectReflectionExposer
     {
-        public FieldInfo[] GetPrivateFields<T>(T obj)
+        internal static FieldInfo[] GetPrivateFields<T>(T obj)
         {
             return obj.GetType().GetFields(BindingFlags.NonPublic |
                                            BindingFlags.Instance);
         }
 
-        public FieldInfo[] GetPublicFields<T>(T obj)
+        internal static FieldInfo[] GetPublicFields<T>(T obj)
         {
             return obj.GetType().GetFields(BindingFlags.Public |
                                            BindingFlags.Instance |
                                            BindingFlags.DeclaredOnly);
         }
 
-        public FieldInfo[] GetAllFields<T>(T obj)
+        internal static FieldInfo[] GetAllFields<T>(T obj)
         {
             var privateFields = GetPrivateFields(obj);
             var publicFields = GetPublicFields(obj);
@@ -34,30 +34,66 @@ namespace SearchChests
 
             return allFields;
         }
+
+        internal static void OutputFields<T>(T obj)
+        {
+            FieldInfo[] fields = ObjectReflectionExposer.GetAllFields(obj);
+
+            foreach (FieldInfo field in fields)
+            {
+                ModEntry.Log(field);
+            }
+        }
     }
 
-    public class GameObjectExposer
+    public class ChatExposer
     {
-        public List<String> GetAllChatMessages()
+        internal static String TrimChatMessage(String message)
         {
-            List<String> messages = new List<String>();
-            var sdMessagesRepresentation = ModEntry.StaticHelper.Reflection.GetField
+            return message
+                .Substring(message.IndexOf(':') + 2)
+                .Trim();
+        }
+
+        private static List<StardewValley.Menus.ChatMessage> _GetAllChatMessages()
+        {
+            return ModEntry.StaticHelper.Reflection.GetField
                 <List<StardewValley.Menus.ChatMessage>>
                 (Game1.chatBox, "messages").GetValue();
+        }
+
+        internal static String GetLastChatMessage()
+        {
+            var sdMessagesRepresentation = _GetAllChatMessages();
+
+            if (sdMessagesRepresentation.Count == 0) {
+                return null;
+            }
+
+            int lastMessageIdx = sdMessagesRepresentation.Count - 1;
+            String lastMessage = sdMessagesRepresentation[lastMessageIdx].message[0].message;
+            return TrimChatMessage(lastMessage);
+        }
+
+        internal static List<String> GetAllChatMessages()
+        {
+            List<String> messages = new List<String>();
+            var sdMessagesRepresentation = _GetAllChatMessages();
 
             foreach (var message in sdMessagesRepresentation)
             {
                 String messageText = message.message[0].message;
-                messageText = messageText
-                    .Substring(messageText.IndexOf(':') + 2)
-                    .Trim();
+                messageText = TrimChatMessage(messageText);
                 messages.Add(messageText);
             }
 
             return messages;
         }
+    }
 
-        public GameLocation GetPlayerLocation()
+    public class GameObjectExposer
+    {
+        internal static GameLocation GetPlayerLocation()
         {
             return Game1.currentLocation;
         }
