@@ -2,147 +2,77 @@
 using System.Reflection;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.Objects;
 
 namespace SearchChests
 {
-    public class ObjectReflectionExposer
-    {
-        private IModHelper helper;
-
-        public ObjectReflectionExposer(IModHelper helper)
-        {
-            this.helper = helper;
-        }
-
-        public FieldInfo[] GetPrivateFields<T>(T obj)
-        {
-            return obj.GetType().GetFields(BindingFlags.NonPublic |
-                                           BindingFlags.Instance);
-        }
-
-        public FieldInfo[] GetPublicFields<T>(T obj)
-        {
-            return obj.GetType().GetFields(BindingFlags.Public |
-                                           BindingFlags.Instance |
-                                           BindingFlags.DeclaredOnly);
-        }
-
-        public FieldInfo[] GetAllFields<T>(T obj)
-        {
-            var privateFields = GetPrivateFields(obj);
-            var publicFields = GetPublicFields(obj);
-
-            var allFields = new FieldInfo[privateFields.Length + publicFields.Length];
-            privateFields.CopyTo(allFields, 0);
-            publicFields.CopyTo(allFields, privateFields.Length);
-
-            return allFields;
-        }
-    }
-
-    public class ChatBoxExposer
-    {
-        private IModHelper helper;
-
-        public ChatBoxExposer(IModHelper helper)
-        {
-            this.helper = helper;
-        }
-
-        public List<String> GetAllChatMessages()
-        {
-            List<String> messages = new List<String>();
-            var sdMessagesRepresentation = this.helper.Reflection.GetField
-                <List<StardewValley.Menus.ChatMessage>>
-                (Game1.chatBox, "messages").GetValue();
-
-            foreach (var message in sdMessagesRepresentation)
-            {
-                messages.Add(message.message[0].message);
-            }
-
-            return messages;
-        }
-    }
-
-    public class PlayerExposer
-    {
-        private IModHelper helper;
-
-        public PlayerExposer(IModHelper helper)
-        {
-            this.helper = helper;
-        }
-
-        public String GetPlayerLocation()
-        {
-            var location = this.helper.Reflection.GetField
-                <StardewValley.Network.NetLocationRef>
-                (Game1.player, "currentLocationRef").GetValue();
-
-            var locationName = this.helper.Reflection.GetField
-                <Netcode.NetString>
-                (location, "locationName").GetValue();
-
-            return locationName;
-        }
-    }
-
     public class ModEntry : Mod
     {
-        private ObjectReflectionExposer objectExposer;
-        private ChatBoxExposer chatExposer;
-        private PlayerExposer playerExposer;
+        internal static IModHelper StaticHelper  { get; private set; }
+        internal static IMonitor   StaticMonitor { get; private set; }
+
+        private static ObjectReflectionExposer objectExposer;
+        private static GameObjectExposer gameExposer;
 
         private String lastChatMessage;
+        private List<Tuple<Chest, Color>> oldChestTints =
+            new List<Tuple<Chest, Color>>();
 
         public override void Entry(IModHelper helper)
         {
-            objectExposer = new ObjectReflectionExposer(helper);
-            chatExposer = new ChatBoxExposer(helper);
-            playerExposer = new PlayerExposer(helper);
+            StaticHelper = Helper;
+            StaticMonitor = Monitor;
+
+            objectExposer = new ObjectReflectionExposer();
+            gameExposer = new GameObjectExposer();
 
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
-            helper.Events.GameLoop.OneSecondUpdateTicking += this.CheckChatBox;
-
-            this.Monitor.Log($"{this.Monitor.GetType()}", LogLevel.Warn);
         }
 
-        private void LogToMonitor(dynamic val)
+        internal static void Log(dynamic val)
         {
-            this.Monitor.Log($"{val}", LogLevel.Warn);
+            StaticMonitor.Log($"{val}", LogLevel.Warn);
         }
 
-        private void OutputFields(FieldInfo[] fields)
+        internal static void OutputFields<T>(T obj)
         {
+            FieldInfo[] fields = objectExposer.GetAllFields(obj);
+
             foreach (FieldInfo field in fields)
             {
-                LogToMonitor(field);
+                Log(field);
             }
+        }
+
+        private void resetChestTints()
+        {
+            foreach (var t in oldChestTints)
+            {
+                t.Item1.Tint = t.Item2;
+            }
+
+            oldChestTints.Clear();
         }
 
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
-        }
 
-        private void CheckChatBox(object sender, OneSecondUpdateTickingEventArgs e)
-        {
-            if (!Context.IsWorldReady)
+            // We really just want to check chests whenever the user
+            // presses enter, which has a possibility of being to send
+            // a chat message.
+            if (e.Button != Keys.Enter.ToSButton())
                 return;
-
-            // Testing location and fetching chests.
-            String playerLocation = playerExposer.GetPlayerLocation();
-            LogToMonitor(playerLocation);
 
             // (TODO): Change this to just get a single message in the
             // exposer instead, we don't need all messages.
-            List<String> chatMessages = chatExposer.GetAllChatMessages();
+            List<String> chatMessages = gameExposer.GetAllChatMessages();
             if (chatMessages.Count == 0)
                 return;
 
@@ -150,7 +80,38 @@ namespace SearchChests
             if (newestMessage != this.lastChatMessage)
             {
                 this.lastChatMessage = newestMessage;
-                LogToMonitor(this.lastChatMessage);
+            }
+
+            if (this.lastChatMessage == "unset")
+            {
+                resetChestTints();
+                return;
+            }
+
+            var playerLocation = gameExposer.GetPlayerLocation();
+            List<Chest> chests = new List<Chest>();
+            foreach (var obj in playerLocation.objects.Values)
+            {
+                if (obj is Chest)
+                {
+                    chests.Add((Chest) obj);
+                }
+            }
+
+            foreach (Chest chest in chests)
+            {
+                foreach (Item item in chest.items)
+                {
+                    String itemDisplayName = item.DisplayName.ToLower();
+                    String itemSearchedFor = this.lastChatMessage.ToLower();
+
+                    if (itemDisplayName == itemSearchedFor)
+                    {
+                        Color oldTint = chest.tint;
+                        oldChestTints.Add(Tuple.Create(chest, oldTint));
+                        chest.Tint = new Color(0, 0, 0, 255);
+                    }
+                }
             }
         }
     }
