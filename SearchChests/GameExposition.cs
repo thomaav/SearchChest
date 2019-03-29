@@ -8,58 +8,6 @@ using StardewValley;
 
 namespace SearchChests
 {
-    public class ObjectReflectionExposer
-    {
-        internal static FieldInfo[] GetPrivateFields<T>(T obj)
-        {
-            return obj.GetType().GetFields(BindingFlags.NonPublic |
-                                           BindingFlags.Instance);
-        }
-
-        internal static FieldInfo[] GetPublicFields<T>(T obj)
-        {
-            return obj.GetType().GetFields(BindingFlags.Public |
-                                           BindingFlags.Instance |
-                                           BindingFlags.DeclaredOnly);
-        }
-
-        internal static FieldInfo[] GetAllFields<T>(T obj)
-        {
-            var privateFields = GetPrivateFields(obj);
-            var publicFields = GetPublicFields(obj);
-
-            var allFields = new FieldInfo[privateFields.Length + publicFields.Length];
-            privateFields.CopyTo(allFields, 0);
-            publicFields.CopyTo(allFields, privateFields.Length);
-
-            return allFields;
-        }
-
-        internal static MethodInfo[] GetAllMethods<T>(T obj)
-        {
-            return obj.GetType().GetMethods(BindingFlags.Instance |
-                                            BindingFlags.Public |
-                                            BindingFlags.NonPublic |
-                                            BindingFlags.FlattenHierarchy);
-        }
-
-        internal static void LogMembers<T>(T obj)
-        {
-            FieldInfo[] fields = ObjectReflectionExposer.GetAllFields(obj);
-            MethodInfo[] methods = ObjectReflectionExposer.GetAllMethods(obj);
-
-            foreach (FieldInfo field in fields)
-            {
-                ModEntry.Log(field);
-            }
-
-            foreach (MethodInfo method in methods)
-            {
-                ModEntry.Log(method);
-            }
-        }
-    }
-
     public class ChatExposer
     {
         internal static String TrimChatMessage(String message)
