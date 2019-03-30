@@ -12,12 +12,19 @@ namespace SearchChests
         private List<Tuple<Chest, Color>> oldChestTints =
             new List<Tuple<Chest, Color>>();
 
-        private bool ItemNamesMatch(String itemDisplayName, String itemSearchedFor)
+        private bool ItemNamesMatch(Item item, String itemSearchedFor)
         {
+            String categoryName = item.getCategoryName().ToLower();
+            String itemName = item.DisplayName.ToLower();
+            itemSearchedFor = itemSearchedFor.ToLower();
+
+            ModEntry.Log(categoryName);
+
             if (itemSearchedFor == "")
                 return false;
 
-            return itemDisplayName.Contains(itemSearchedFor);
+            return (itemName.Contains(itemSearchedFor) ||
+                    categoryName.Contains(itemSearchedFor));
         }
 
         internal void ResetChestTints()
@@ -71,7 +78,7 @@ namespace SearchChests
                     String itemDisplayName = item.DisplayName.ToLower();
                     itemSearchedFor = itemSearchedFor.ToLower();
 
-                    if (ItemNamesMatch(itemDisplayName, itemSearchedFor))
+                    if (ItemNamesMatch(item, itemSearchedFor))
                     {
                         Color oldTint = chest.playerChoiceColor.Value;
                         oldChestTints.Add(Tuple.Create(chest, oldTint));
@@ -99,9 +106,7 @@ namespace SearchChests
                 if (actualItem == null)
                     continue;
 
-                String itemDisplayName = actualItem.DisplayName.ToLower();
-                itemSearchedFor = itemSearchedFor.ToLower();
-                if (ItemNamesMatch(itemDisplayName, itemSearchedFor))
+                if (ItemNamesMatch(actualItem, itemSearchedFor))
                     chestItem.scale = 1.2f;
             }
         }
