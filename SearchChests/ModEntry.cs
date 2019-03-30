@@ -12,6 +12,8 @@ namespace SearchChests
         internal static IModHelper StaticHelper  { get; private set; }
         internal static IMonitor   StaticMonitor { get; private set; }
 
+        private ModConfig Config;
+
         private SearchBox searchBox;
         internal static ChestSearcher chestSearcher;
 
@@ -19,6 +21,8 @@ namespace SearchChests
         {
             StaticHelper = Helper;
             StaticMonitor = Monitor;
+
+            Config = this.Helper.ReadConfig<ModConfig>();
 
             searchBox = new SearchBox();
             chestSearcher = new ChestSearcher();
@@ -45,7 +49,8 @@ namespace SearchChests
             if (!Context.IsWorldReady)
                 return;
 
-            if (e.Button == Keys.S.ToSButton() && e.IsDown(SButton.LeftControl)) {
+            if (e.Button == Config.SearchKey.ToSButton()
+                && (!Config.UseControlModifier || e.IsDown(SButton.LeftControl))) {
                 if (Game1.currentLocation.currentEvent != null)
                     return;
 

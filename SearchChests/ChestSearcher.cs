@@ -18,8 +18,6 @@ namespace SearchChests
             String itemName = item.DisplayName.ToLower();
             itemSearchedFor = itemSearchedFor.ToLower();
 
-            ModEntry.Log(categoryName);
-
             if (itemSearchedFor == "")
                 return false;
 
