@@ -26,6 +26,7 @@ namespace SearchChests
             helper.Events.GameLoop.Saving += this.OnSaveResetSearch;
             helper.Events.Input.ButtonPressed += this.OnButtonPressedSearch;
             helper.Events.Display.MenuChanged += this.OnMenuChangedSearch;
+            helper.Events.Player.Warped += this.OnWarpSearch;
         }
 
         internal static void Log(dynamic val)
@@ -59,6 +60,14 @@ namespace SearchChests
 
             if (e.OldMenu != null)
                 chestSearcher.SearchChestsInPlayerLocation(searchBox.SearchText);
+        }
+
+        private void OnWarpSearch(object sender, WarpedEventArgs e)
+        {
+            if (!Context.IsWorldReady)
+                return;
+
+            chestSearcher.SearchChestsInPlayerLocation(searchBox.SearchText);
         }
     }
 }
