@@ -85,6 +85,11 @@ namespace SearchChests
             }
         }
 
+        internal void ResetSearch()
+        {
+            searchBox.ResetSearch();
+        }
+
         public override void draw(SpriteBatch b)
         {
             searchBox.Draw(b, false);

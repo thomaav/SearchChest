@@ -45,6 +45,9 @@ namespace SearchChests
                 return;
 
             if (e.Button == Keys.S.ToSButton() && e.IsDown(SButton.LeftControl)) {
+                if (!e.IsDown(SButton.LeftShift))
+                    searchBox.ResetSearch();
+
                 searchBox.Activate();
                 Game1.activeClickableMenu = searchBox;
             }
