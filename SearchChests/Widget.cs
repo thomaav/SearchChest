@@ -20,8 +20,10 @@ namespace SearchChests
 
         private void UpdateSearchText()
         {
-            if (finalText.Count == 0)
+            if (finalText.Count == 0) {
+                searchText = "";
                 return;
+            }
 
             searchText = finalText.Last().message;
         }
@@ -103,7 +105,8 @@ namespace SearchChests
 
         public override void receiveKeyPress(Keys key)
         {
-            if (key == Keys.Enter) {
+            if (key == Keys.Enter ||
+                key == Keys.Escape) {
                 exitThisMenu(true);
             }
 

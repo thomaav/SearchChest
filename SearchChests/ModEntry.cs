@@ -37,6 +37,7 @@ namespace SearchChests
         private void OnSaveResetSearch(object sender, SavingEventArgs e)
         {
             chestSearcher.CleanUp();
+            searchBox.ResetSearch();
         }
 
         private void OnButtonPressedSearch(object sender, ButtonPressedEventArgs e)
@@ -45,6 +46,9 @@ namespace SearchChests
                 return;
 
             if (e.Button == Keys.S.ToSButton() && e.IsDown(SButton.LeftControl)) {
+                if (Game1.currentLocation.currentEvent != null)
+                    return;
+
                 if (!e.IsDown(SButton.LeftShift))
                     searchBox.ResetSearch();
 

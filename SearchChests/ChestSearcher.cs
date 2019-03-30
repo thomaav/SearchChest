@@ -12,6 +12,14 @@ namespace SearchChests
         private List<Tuple<Chest, Color>> oldChestTints =
             new List<Tuple<Chest, Color>>();
 
+        private bool ItemNamesMatch(String itemDisplayName, String itemSearchedFor)
+        {
+            if (itemSearchedFor == "")
+                return false;
+
+            return itemDisplayName.Contains(itemSearchedFor);
+        }
+
         internal void ResetChestTints()
         {
             foreach (var t in oldChestTints)
@@ -30,12 +38,11 @@ namespace SearchChests
             ResetChestTints();
         }
 
-        internal List<Chest> GetChestsInPlayerLocation()
+        internal List<Chest> GetChestsInLocation(GameLocation location)
         {
-            var playerLocation = Game1.currentLocation;
             List<Chest> chestsInLocation = new List<Chest>();
 
-            foreach (var obj in playerLocation.Objects.Values)
+            foreach (var obj in location.Objects.Values)
             {
                 if (obj is Chest)
                 {
@@ -46,11 +53,17 @@ namespace SearchChests
             return chestsInLocation;
         }
 
-        internal void SearchChestsInPlayerLocation(String itemSearchedFor)
+        internal List<Chest> GetChestsInPlayerLocation()
+        {
+            return GetChestsInLocation(Game1.currentLocation);
+        }
+
+        internal void SearchChestsInLocation(String itemSearchedFor,
+                                             GameLocation location)
         {
             ResetChestTints();
 
-            List<Chest> chestsInLocation = GetChestsInPlayerLocation();
+            List<Chest> chestsInLocation = GetChestsInLocation(location);
             foreach (Chest chest in chestsInLocation)
             {
                 foreach (Item item in chest.items)
@@ -58,7 +71,7 @@ namespace SearchChests
                     String itemDisplayName = item.DisplayName.ToLower();
                     itemSearchedFor = itemSearchedFor.ToLower();
 
-                    if (itemDisplayName == itemSearchedFor)
+                    if (ItemNamesMatch(itemDisplayName, itemSearchedFor))
                     {
                         Color oldTint = chest.playerChoiceColor.Value;
                         oldChestTints.Add(Tuple.Create(chest, oldTint));
@@ -66,6 +79,12 @@ namespace SearchChests
                     }
                 }
             }
+        }
+
+        internal void SearchChestsInPlayerLocation(String itemSearchedFor)
+        {
+            ResetChestTints();
+            SearchChestsInLocation(itemSearchedFor, Game1.currentLocation);
         }
 
         internal void SearchChest(IClickableMenu chestMenu, String itemSearchedFor)
@@ -80,7 +99,9 @@ namespace SearchChests
                 if (actualItem == null)
                     continue;
 
-                if (actualItem.DisplayName.ToLower() == itemSearchedFor.ToLower())
+                String itemDisplayName = actualItem.DisplayName.ToLower();
+                itemSearchedFor = itemSearchedFor.ToLower();
+                if (ItemNamesMatch(itemDisplayName, itemSearchedFor))
                     chestItem.scale = 1.2f;
             }
         }
