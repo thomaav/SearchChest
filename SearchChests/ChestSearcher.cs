@@ -1,11 +1,6 @@
 using System;
-using System.Reflection;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using StardewModdingAPI;
-using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Objects;
 using StardewValley.Menus;
@@ -13,7 +8,6 @@ using StardewValley.Menus;
 namespace SearchChests
 {
     public class ChestSearcher {
-        private String lastChatMessage = null;
         private Color containsItemColor = new Color(1, 1, 1, 255);
         private List<Tuple<Chest, Color>> oldChestTints =
             new List<Tuple<Chest, Color>>();
@@ -36,16 +30,6 @@ namespace SearchChests
             ResetChestTints();
         }
 
-        private void UpdateLastChatMessage()
-        {
-            String _lastChatMessage = ChatExposer.GetLastChatMessage();
-            if (_lastChatMessage == null)
-                return;
-
-            if (_lastChatMessage != this.lastChatMessage)
-                this.lastChatMessage = _lastChatMessage;
-        }
-
         internal List<Chest> GetChestsInPlayerLocation()
         {
             var playerLocation = Game1.currentLocation;
@@ -62,14 +46,9 @@ namespace SearchChests
             return chestsInLocation;
         }
 
-        internal void SearchChestsInPlayerLocation()
+        internal void SearchChestsInPlayerLocation(String itemSearchedFor)
         {
             ResetChestTints();
-            UpdateLastChatMessage();
-
-            if (this.lastChatMessage == null ||
-                this.lastChatMessage == "unset")
-                return;
 
             List<Chest> chestsInLocation = GetChestsInPlayerLocation();
             foreach (Chest chest in chestsInLocation)
@@ -77,7 +56,7 @@ namespace SearchChests
                 foreach (Item item in chest.items)
                 {
                     String itemDisplayName = item.DisplayName.ToLower();
-                    String itemSearchedFor = this.lastChatMessage.ToLower();
+                    itemSearchedFor = itemSearchedFor.ToLower();
 
                     if (itemDisplayName == itemSearchedFor)
                     {
@@ -89,16 +68,10 @@ namespace SearchChests
             }
         }
 
-        internal void SearchChest(IClickableMenu chestMenu)
+        internal void SearchChest(IClickableMenu chestMenu, String itemSearchedFor)
         {
-            UpdateLastChatMessage();
-
-            if (this.lastChatMessage == null ||
-                this.lastChatMessage == "unset")
-                return;
-
             if (!(chestMenu is ItemGrabMenu))
-                ModEntry.Log(chestMenu.GetType());
+                return;
 
             InventoryMenu chestInventory = ((ItemGrabMenu) chestMenu).ItemsToGrabMenu;
             foreach (var chestItem in chestInventory.inventory)
@@ -107,7 +80,7 @@ namespace SearchChests
                 if (actualItem == null)
                     continue;
 
-                if (actualItem.DisplayName.ToLower() == this.lastChatMessage.ToLower())
+                if (actualItem.DisplayName.ToLower() == itemSearchedFor.ToLower())
                     chestItem.scale = 1.2f;
             }
         }
